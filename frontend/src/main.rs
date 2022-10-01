@@ -1,48 +1,47 @@
 use yew::prelude::*;
+use yew_router::prelude::*;
 
 mod components;
-use components::app_bar::AppBar;
+mod pages;
 
+// Common components
+use components::app_bar::AppBar;
+// Pages
+use pages::home::home::Home;
+use pages::time_chamber::time_chamber::TimeChamber;
+
+// Main entry point
 fn main() {
     yew::start_app::<App>();
+}
+
+// Router
+#[derive(Clone, Routable, PartialEq)]
+pub enum Route {
+    #[at("/")]
+    Home,
+    #[at("/time-chamber")]
+    TimeChamber,
+}
+
+// --- Router Switch ---
+fn switch(routes: &Route) -> Html {
+    match routes {
+        Route::Home => html! { <Home /> },
+        Route::TimeChamber => html! { <TimeChamber />},
+    }
 }
 
 // --- Main Component ---
 #[function_component(App)]
 pub fn app() -> Html {
     html! {
-        // Main App wrapper
-        <div class="rounded-xl text-white w-screen h-screen border-1 flex flex-col">
-            <AppBar />
-
-            // Hero section
-            <div class="w-100 bg-neutral-500">
-                <div class="container mx-auto">
-                    <div class="flex flex-col items-center justify-center h-44">
-                        <h1 class="text-5xl font-bold">{"Fullstack Rust"}</h1>
-                        <div class="border w-1/3 p-4 flex items-center justify-center">{"Logo"}</div>
-                    </div>
-                </div>
+        <BrowserRouter>
+            // Main App wrapper
+            <div class="rounded-xl text-white w-screen h-screen border-1 flex flex-col">
+                <AppBar />
+                <Switch<Route> render={Switch::render(switch)} />
             </div>
-
-            // Content
-            <div class="rounded-b-xl bg-slate-800 p-4 w-100 grow">
-                // Link to Clock/Pomodoro mini-app
-                <button class="border-2">{"Clockster"}</button>
-                // <Timer />
-            </div>
-        </div>
-    }
-}
-
-#[function_component(Timer)]
-pub fn timer() -> Html {
-    let counter = use_state(|| 20);
-
-    html! {
-        <div class="w-100 text-center">
-            <h1>{"Timer"}</h1>
-            <div>{format!("{}", *counter)}</div>
-        </div>
+        </BrowserRouter>
     }
 }
