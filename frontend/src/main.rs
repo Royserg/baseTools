@@ -1,18 +1,13 @@
-use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
+
+mod components;
+use components::app_bar::AppBar;
 
 fn main() {
     yew::start_app::<App>();
 }
 
-// --- Triggers for js Tauri API commands ---
-#[wasm_bindgen(module = "/public/glue.js")]
-extern "C" {
-    #[wasm_bindgen(js_name = hideWindow)]
-    pub async fn hideWindow();
-}
-
+// --- Main Component ---
 #[function_component(App)]
 pub fn app() -> Html {
     html! {
@@ -23,43 +18,31 @@ pub fn app() -> Html {
             // Hero section
             <div class="w-100 bg-neutral-500">
                 <div class="container mx-auto">
-                    <div class="flex flex-col items-center justify-center h-96">
+                    <div class="flex flex-col items-center justify-center h-44">
                         <h1 class="text-5xl font-bold">{"Fullstack Rust"}</h1>
+                        <div class="border w-1/3 p-4 flex items-center justify-center">{"Logo"}</div>
                     </div>
                 </div>
             </div>
 
             // Content
             <div class="rounded-b-xl bg-slate-800 p-4 w-100 grow">
+                // Link to Clock/Pomodoro mini-app
+                <button class="border-2">{"Clockster"}</button>
+                // <Timer />
             </div>
         </div>
     }
 }
 
-#[function_component(AppBar)]
-pub fn app_bar() -> Html {
-    let nav_control_class = "rounded-full bg-gray-400 w-3 h-3";
-
-    let close_onclick = Callback::from(move |_| handle_nav_close_btn_click());
+#[function_component(Timer)]
+pub fn timer() -> Html {
+    let counter = use_state(|| 20);
 
     html! {
-        <nav class="rounded-t-xl w-100 bg-neutral-500 px-4 py-3 flex gap-x-2" data-tauri-drag-region="default">
-            <button
-                id="titlebar-close"
-                onclick={close_onclick}
-                class={classes!(nav_control_class, "bg-red-400", "flex", "items-center", "justify-center")}
-            >
-                <span class={classes!("text-xs", "text-red-400", "hover:text-black")}>{"x"}</span>
-            </button>
-            <button disabled={true} class={nav_control_class}></button>
-            <button disabled={true} class={nav_control_class}></button>
-        </nav>
+        <div class="w-100 text-center">
+            <h1>{"Timer"}</h1>
+            <div>{format!("{}", *counter)}</div>
+        </div>
     }
-}
-
-// https://dev.to/stevepryde/create-a-desktop-app-in-rust-using-tauri-and-yew-2bhe
-fn handle_nav_close_btn_click() {
-    spawn_local(async move {
-        hideWindow().await;
-    });
 }

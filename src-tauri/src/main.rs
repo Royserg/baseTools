@@ -27,14 +27,13 @@ fn main() {
         .on_system_tray_event(app_tray_event_handler)
         .invoke_handler(tauri::generate_handler![hide_window])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .expect("error while running tauri application")
 }
 
 // --- System App Tray ---
 fn init_app_tray() -> SystemTray {
     let open_app = CustomMenuItem::new(TRAY_ITEM_OPEN_APP_ID, "Open App");
     let quit = CustomMenuItem::new(TRAY_ITEM_QUIT_ID, "Quit");
-
     let tray_menu = SystemTrayMenu::new()
         .add_item(open_app)
         .add_native_item(SystemTrayMenuItem::Separator)

@@ -2,3 +2,7 @@
 /frontend/dist
 /frontend/target
 /frontend/styles/output.css
+
+frontend/src/components/.DS_Store
+
+frontend/src/.DS_Store
