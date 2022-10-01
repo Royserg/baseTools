@@ -19,9 +19,13 @@ pub fn home() -> Html {
 
             // Content
             <div class="rounded-b-xl bg-slate-800 p-4 w-100 grow">
-                <Link<Route> to={Route::TimeChamber} classes="border-2 p-4">
-                  { "Time Chamber" }
-                </Link<Route>>
+
+                <div class="flex w-80 mx-auto">
+                    <Link<Route> to={Route::TimeChamber} classes="border-10 p-4 bg-red-800">
+                    { "Time Chamber" }
+                    </Link<Route>>
+                </div>
+
             </div>
         </>
     }
