@@ -75,28 +75,31 @@ fn app_tray_event_handler(app: &AppHandle, event: SystemTrayEvent) {
         } => {
             println!("system tray received a LEFT click");
 
-            let window_width = 300.00;
+            let window_width = 200.00;
             let window_height = 200.00;
 
             let window = tauri::WindowBuilder::new(
                 app,
-                "tray-menu", /* the unique window label */
-                tauri::WindowUrl::App("tray-menu".into()),
+                TRAY_WINDOW_LABEL, /* the unique window label */
+                tauri::WindowUrl::App(TRAY_WINDOW_LABEL.into()),
             )
             .inner_size(window_width, window_height)
-            .position(position.x - (window_width / 2.0), position.y)
+            // NOTE: depending on the screen this has to be changed.
+            // Retina displays need x & y divided by 2 to by attached to icon
+            .position(position.x / 2.0, position.y / 2.0)
             .decorations(true)
             .resizable(false)
             .decorations(false)
+            .always_on_top(true)
             .skip_taskbar(true)
-            .transparent(true);
+            .transparent(true)
+            .focus();
 
-            if let Ok(window) = window.build() {
-                window
-                    .set_focus()
-                    .expect("Failed to set focus on the window");
-            } else {
-                println!("Window already exists.");
+            if let Err(_error) = window.build() {
+                let tray_window = app.get_window(TRAY_WINDOW_LABEL).unwrap();
+                tray_window
+                    .close()
+                    .unwrap_or_else(|_err| println!("Failed to close tray window."));
             }
         }
         SystemTrayEvent::RightClick {
@@ -120,8 +123,20 @@ fn app_tray_event_handler(app: &AppHandle, event: SystemTrayEvent) {
     }
 }
 
+// ===========================================================
+// --- Commands ---
 #[tauri::command]
-fn hide_window(window: Window) {
-    // window.hide().unwrap();
-    window.close().unwrap();
+fn hide_main_window(window: Window) {
+    window.hide().unwrap();
+}
+
+#[tauri::command]
+fn show_main_window(window: Window) {
+    let main_window = window.get_window(MAIN_WINDOW_LABEL).unwrap();
+    main_window.show().unwrap();
+}
+
+#[tauri::command]
+fn quit_app() {
+    std::process::exit(0);
 }

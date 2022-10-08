@@ -5,13 +5,13 @@ use yew::{classes, function_component, html, Callback};
 // --- Triggers for js Tauri API commands ---
 #[wasm_bindgen(module = "/public/glue.js")]
 extern "C" {
-    #[wasm_bindgen(js_name = hideWindow)]
-    pub async fn hideWindow();
+    #[wasm_bindgen(js_name = hideMainWindow)]
+    pub async fn hideMainWindow();
 }
 
 fn handle_nav_close_btn_click() -> () {
     spawn_local(async move {
-        hideWindow().await;
+        hideMainWindow().await;
     });
 }
 
