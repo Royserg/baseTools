@@ -9,6 +9,7 @@ use components::app_bar::AppBar;
 // Pages
 use pages::home::home::Home;
 use pages::time_chamber::time_chamber::TimeChamber;
+use pages::tray_menu::tray_menu::TrayMenu;
 
 // Main entry point
 fn main() {
@@ -22,13 +23,20 @@ pub enum Route {
     Home,
     #[at("/time-chamber")]
     TimeChamber,
+    #[at("/tray-menu")]
+    TrayMenu,
 }
 
 // --- Router Switch ---
 fn switch(routes: &Route) -> Html {
     match routes {
-        Route::Home => html! { <Home /> },
+        // NOTE: Main app pages
+        // TODO: uncomment Route::Home => html! { <Home /> },
+        Route::Home => html! { <TimeChamber /> },
         Route::TimeChamber => html! { <TimeChamber />},
+
+        // NOTE: Page opened when tray icon is clicked
+        Route::TrayMenu => html! { <TrayMenu /> },
     }
 }
 
@@ -39,7 +47,6 @@ pub fn app() -> Html {
         <BrowserRouter>
             // Main App wrapper
             <div class="rounded-xl text-white w-screen h-screen border-1 flex flex-col">
-                <AppBar />
                 <Switch<Route> render={Switch::render(switch)} />
             </div>
         </BrowserRouter>
