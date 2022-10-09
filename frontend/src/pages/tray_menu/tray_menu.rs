@@ -40,7 +40,8 @@ pub fn tray_menu() -> Html {
 
             // Timer display and controls
             <div class="w-full mx-1">
-                <h1 class="text-2xl text-center">{ "00:09" }</h1>
+                // TODO: Read value from the event coming from backend
+                <h2 class="text-2xl text-center">{ "00:09" }</h2>
             </div>
 
             // --- Menu buttons ---
