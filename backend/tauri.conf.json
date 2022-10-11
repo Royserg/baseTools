@@ -1,9 +1,9 @@
 {
   "build": {
-    "distDir": "../frontend/dist",
-    "devPath": "http://localhost:8080",
-    "beforeDevCommand": "cd frontend && trunk serve",
-    "beforeBuildCommand": "cd frontend && trunk build",
+    "beforeBuildCommand": "cd frontend && pnpm build && pnpm export",
+    "beforeDevCommand": "cd frontend && pnpm dev",
+    "devPath": "http://localhost:3000",
+    "distDir": "../frontend/out",
     "withGlobalTauri": true
   },
   "package": {
