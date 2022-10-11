@@ -3,10 +3,6 @@ use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-// #[path = "components/mod.rs"]
-// mod components;
-// use components::timer::Timer;
-
 // --- Triggers for js Tauri API commands ---
 #[wasm_bindgen(module = "/public/glue.js")]
 extern "C" {

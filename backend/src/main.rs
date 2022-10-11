@@ -10,6 +10,10 @@ use commands::{hide_main_window, quit_app, show_main_window};
 mod app_tray;
 use app_tray::{app_tray_event_handler, init_app_tray};
 
+// Apps
+mod apps;
+use apps::timer::{timer_test, Timer};
+
 // -------------------------
 // --- CONSTANTS -----------
 // --- WINDOWS -----
@@ -24,6 +28,9 @@ fn main() {
     let app_tray = init_app_tray();
 
     Builder::default()
+        .manage(Timer {
+            state: Default::default(),
+        })
         .setup(|app| {
             let _window = app.get_window(MAIN_WINDOW_LABEL).unwrap();
             _window.hide().unwrap();
@@ -35,7 +42,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             hide_main_window,
             show_main_window,
-            quit_app
+            quit_app,
+            timer_test
         ])
         // --- Window events
         .on_window_event(|event| match event.event() {

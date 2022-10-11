@@ -1,9 +1,23 @@
 use std::rc::Rc;
 
+use js_sys::Function;
+use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
+use wasm_bindgen_futures::spawn_local;
+use weblog::console_log;
 use yew::prelude::*;
-use yew_router::prelude::*;
 
 use gloo_timers::callback::Interval;
+
+// --- Triggers for js Tauri API commands ---
+type Callback = fn();
+
+#[wasm_bindgen(module = "/public/glue.js")]
+extern "C" {
+    #[wasm_bindgen(js_name = listenToEvent)]
+    pub async fn listenToEvent(evtName: String) -> JsValue;
+    #[wasm_bindgen(js_name = timerStart)]
+    pub async fn timerStart();
+}
 
 #[derive(Default, Debug, PartialEq, Copy, Clone)]
 enum TimerStatus {
@@ -23,7 +37,6 @@ enum TimerStateAction {
     Reset,
 }
 
-// #[derive(Default)]
 struct TimerState {
     minutes: i32,
     seconds: i32,
@@ -138,9 +151,14 @@ pub fn timer() -> Html {
     });
 
     let start_btn_onclick = {
-        let timer_state_handle = timer_state_handle.clone();
+        // let timer_state_handle = timer_state_handle.clone();
+        // Callback::from(move |_| {
+        //     timer_state_handle.dispatch(TimerStateAction::Start);
+        // })
         Callback::from(move |_| {
-            timer_state_handle.dispatch(TimerStateAction::Start);
+            spawn_local(async move {
+                timerStart().await;
+            })
         })
     };
 
