@@ -1,16 +1,29 @@
-use std::rc::Rc;
+use std::sync::Mutex;
+use tauri::State;
 
-use tauri::{App, Manager};
-// use tauri::{Manager, Window};
-
-// --- Reducer ---
-pub trait Reducible {
-    type Action;
-
-    fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self>;
+// === Store ===
+pub struct Store<T, A> {
+    state: T,
+    reducer: Box<dyn Fn(T, A) -> T + Send>,
 }
 
-// --- Reducer -- end
+impl<T, A> Store<T, A>
+where
+    T: Copy + Clone + Default + PartialEq,
+{
+    fn new(reducer: Box<dyn Fn(T, A) -> T + Send>) -> Self {
+        Self {
+            state: T::default(),
+            reducer,
+        }
+    }
+
+    fn dispatch(&mut self, action: A) {
+        self.state = (self.reducer)(self.state, action);
+    }
+}
+
+// =============
 
 #[derive(Default, Debug, PartialEq, Copy, Clone)]
 enum TimerStatus {
@@ -20,9 +33,9 @@ enum TimerStatus {
     Paused,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum TimerStateAction {
-    // IncrementSeconds,
+    IncrementSeconds,
     DecrementSeconds,
     IncrementMinutes,
     DecrementMinutes,
@@ -34,7 +47,7 @@ pub enum TimerStateAction {
 // --------------------------------
 // --- Timer State ----------------
 // --------------------------------
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub struct TimerState {
     minutes: i32,
     seconds: i32,
@@ -44,110 +57,92 @@ pub struct TimerState {
 impl Default for TimerState {
     fn default() -> Self {
         TimerState {
-            minutes: 17,
+            minutes: 25,
             seconds: 00,
             status: TimerStatus::Idle,
         }
     }
 }
 
-// impl TimerState {
-//     /// Reducer Action Type
-//     type Action = TimerStateAction;
+// --------------------------------
+// --- Reducer function -----------
+fn timer_state_reducer(state: TimerState, action: TimerStateAction) -> TimerState {
+    match action {
+        // -- Status
+        TimerStateAction::Start => TimerState {
+            status: TimerStatus::Running,
+            seconds: state.seconds,
+            minutes: state.minutes,
+        },
+        TimerStateAction::Pause => TimerState {
+            status: TimerStatus::Paused,
+            seconds: state.seconds,
+            minutes: state.minutes,
+        },
+        TimerStateAction::Reset => TimerState {
+            ..Default::default()
+        },
+        // -- Minutes
+        TimerStateAction::IncrementMinutes => TimerState {
+            status: state.status,
+            minutes: state.minutes + 1,
+            seconds: state.seconds,
+        },
+        TimerStateAction::DecrementMinutes => TimerState {
+            status: state.status,
+            minutes: if state.minutes != 0 {
+                state.minutes - 1
+            } else {
+                0
+            },
+            seconds: state.seconds,
+        },
+        // -- Seconds
+        TimerStateAction::DecrementSeconds => {
+            let is_seconds_zero = state.seconds == 0;
+            let is_minutes_zero = state.minutes == 0;
 
-//     /// Reducer Function
-//     fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
-//         match action {
-//             TimerStateAction::DecrementSeconds => {
-//                 let is_seconds_zero = self.seconds == 0;
-//                 let is_minutes_zero = self.minutes == 0;
+            if is_minutes_zero && is_seconds_zero {
+                return TimerState {
+                    // Timer finished -> switch to default status
+                    status: TimerStatus::Idle,
+                    minutes: 0,
+                    seconds: 0,
+                };
+            }
 
-//                 if is_minutes_zero && is_seconds_zero {
-//                     return Self {
-//                         minutes: 0,
-//                         seconds: 0,
-//                         status: TimerStatus::Idle,
-//                     }
-//                     .into();
-//                 }
-
-//                 Self {
-//                     status: self.status,
-//                     seconds: if is_seconds_zero {
-//                         59
-//                     } else {
-//                         self.seconds - 1
-//                     },
-//                     minutes: if is_seconds_zero {
-//                         self.minutes - 1
-//                     } else {
-//                         self.minutes
-//                     },
-//                 }
-//                 .into()
-//             }
-//             TimerStateAction::IncrementMinutes => Self {
-//                 status: self.status,
-//                 minutes: self.minutes + 1,
-//                 seconds: self.seconds,
-//             }
-//             .into(),
-//             TimerStateAction::DecrementMinutes => Self {
-//                 status: self.status,
-//                 seconds: self.seconds,
-//                 minutes: if self.minutes != 0 {
-//                     self.minutes - 1
-//                 } else {
-//                     0
-//                 },
-//             }
-//             .into(),
-//             TimerStateAction::Start => Self {
-//                 status: TimerStatus::Running,
-//                 seconds: self.seconds,
-//                 minutes: self.minutes,
-//             }
-//             .into(),
-//             TimerStateAction::Pause => Self {
-//                 status: TimerStatus::Paused,
-//                 seconds: self.seconds,
-//                 minutes: self.minutes,
-//             }
-//             .into(),
-//             TimerStateAction::Reset => Self {
-//                 ..Default::default()
-//             }
-//             .into(),
-//         }
-//     }
-// }
+            TimerState {
+                status: state.status,
+                seconds: if is_seconds_zero {
+                    59
+                } else {
+                    state.seconds - 1
+                },
+                minutes: if is_seconds_zero {
+                    state.minutes - 1
+                } else {
+                    state.minutes
+                },
+            }
+        }
+        _ => state,
+    }
+}
 
 // --------------------------------
 // --- Timer ----------------------
 // --------------------------------
 pub struct Timer {
-    pub state: TimerState,
+    // pub state: Mutex<TimerState>,
+    pub store: Mutex<Store<TimerState, TimerStateAction>>,
 }
 
 impl Default for Timer {
     fn default() -> Self {
+        let store: Store<TimerState, TimerStateAction> = Store::new(Box::new(timer_state_reducer));
         Timer {
-            state: TimerState {
-                ..Default::default()
-            },
+            store: Mutex::new(store),
         }
-    }
-}
-
-impl Timer {
-    pub fn dispatch(&self, action: TimerStateAction) -> TimerState {
-        println!("Dispatch called with action: {:?}", action);
-        // TODO: add handlers for each action
-        self.state
-    }
-
-    pub fn current_time_string(&self) -> String {
-        format!("{}:{}", self.state.minutes, self.state.seconds)
     }
 }
 
@@ -155,23 +150,40 @@ impl Timer {
 // --- Commands --------------
 // ---------------------------
 #[tauri::command]
-pub fn timer_test(window: tauri::Window, timer: tauri::State<'_, Timer>) {
-    let app_handle = window.app_handle();
+pub fn timer_start(window: tauri::Window, timer: State<Timer>) {
+    // let app_handle = window.app_handle();
 
     // Dispatch action
-    timer.dispatch(TimerStateAction::Start);
+    let mut store_handle = timer.store.lock().unwrap();
+    println!("Store state: {}", store_handle.state.minutes);
+    store_handle.dispatch(TimerStateAction::IncrementMinutes);
+    println!("Store state: {}", store_handle.state.minutes);
+    store_handle.dispatch(TimerStateAction::IncrementMinutes);
+    println!("Store state: {}", store_handle.state.minutes);
 
-    println!("{}", timer.current_time_string());
+    // timer.dispatch(TimerStateAction::DecrementSeconds);
+    // println!("{}", timer.current_time_string());
+
+    // timer.dispatch(TimerStateAction::Start);
+    // println!("{}", timer.current_time_string());
+
+    // let thread_data = timer.current_time_string().clone();
+    // thread::spawn(move || loop {
+    //     thread::sleep(Duration::from_secs(1));
+    //     println!("{}", thread_data);
+    // });
 
     // Emit event to notify all windows
-    app_handle
-        .emit_all(
-            "timer_started",
-            TimerEventPayload {
-                time: timer.current_time_string(),
-            },
-        )
-        .unwrap();
+    // TODO: emitting should be coming from Timer struct
+    // app_handle
+    //     .emit_all(
+    //         "timer_state_changed",
+    //         TimerEventPayload {
+    //             status: "running".into(),
+    //             time: timer.current_time_string(),
+    //         },
+    //     )
+    //     .unwrap();
 }
 
 // ------------------------------
@@ -179,5 +191,6 @@ pub fn timer_test(window: tauri::Window, timer: tauri::State<'_, Timer>) {
 // -- Event Payload
 #[derive(Clone, serde::Serialize)]
 struct TimerEventPayload {
+    status: String,
     time: String,
 }

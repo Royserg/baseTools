@@ -12,7 +12,7 @@ use app_tray::{app_tray_event_handler, init_app_tray};
 
 // Apps
 mod apps;
-use apps::timer::{timer_test, Timer};
+use apps::timer::{timer_start, Timer};
 
 // -------------------------
 // --- CONSTANTS -----------
@@ -29,7 +29,7 @@ fn main() {
 
     Builder::default()
         .manage(Timer {
-            state: Default::default(),
+            ..Default::default()
         })
         .setup(|app| {
             let _window = app.get_window(MAIN_WINDOW_LABEL).unwrap();
@@ -43,7 +43,7 @@ fn main() {
             hide_main_window,
             show_main_window,
             quit_app,
-            timer_test
+            timer_start
         ])
         // --- Window events
         .on_window_event(|event| match event.event() {
