@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 #[cfg_attr(
     all(not(debug_assertions), target_os = "windows"),
     windows_subsystem = "windows"
@@ -12,13 +14,16 @@ use app_tray::{app_tray_event_handler, init_app_tray};
 
 // Apps
 mod apps;
-use apps::timer::{timer_start, Timer};
+use apps::timer::{spawn_timer_thread, timer_start, Timer};
+
+use crate::apps::timer::{timer_get_state, timer_pause, timer_reset};
 
 // -------------------------
 // --- CONSTANTS -----------
 // --- WINDOWS -----
 const MAIN_WINDOW_LABEL: &str = "main";
 const TRAY_WINDOW_LABEL: &str = "tray-menu";
+const TIMER_FINISHED_WINDOW_LABEL: &str = "timer-finished";
 // --- TRAY ITEMS ---
 const TRAY_ITEM_OPEN_APP_ID: &str = "open_app";
 const TRAY_ITEM_QUIT_ID: &str = "quit";
@@ -28,22 +33,41 @@ fn main() {
     let app_tray = init_app_tray();
 
     Builder::default()
+        .plugin(tauri_plugin_positioner::init())
+        // --- Store
         .manage(Timer {
             ..Default::default()
         })
+        // --- Setup
         .setup(|app| {
+            // (MacOS) Makes app run in the background, and hides the Dock icon
+            // Without this, switching virual desktop pauses the event loop
+            #[cfg(target_os = "macos")]
+            app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+
             let _window = app.get_window(MAIN_WINDOW_LABEL).unwrap();
-            _window.hide().unwrap();
+            // -- Hide main window when app starts
+            // _window.hide().unwrap();
+
+            let app_handle = app.app_handle();
+            let timer_store = app.try_state::<Timer>().unwrap();
+            let timer_state_handler = Arc::clone(&timer_store.store);
+            spawn_timer_thread(&app_handle, timer_state_handler);
 
             Ok(())
         })
+        // --- Tray
         .system_tray(app_tray)
         .on_system_tray_event(app_tray_event_handler)
+        // --- Commands
         .invoke_handler(tauri::generate_handler![
             hide_main_window,
             show_main_window,
             quit_app,
-            timer_start
+            timer_start,
+            timer_get_state,
+            timer_pause,
+            timer_reset
         ])
         // --- Window events
         .on_window_event(|event| match event.event() {

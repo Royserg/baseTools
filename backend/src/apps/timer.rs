@@ -1,7 +1,14 @@
-use std::sync::Mutex;
-use tauri::State;
+use crate::TIMER_FINISHED_WINDOW_LABEL;
+use std::{
+    sync::{Arc, Mutex},
+    thread::{self, JoinHandle},
+    time::Duration,
+};
+use tauri::{AppHandle, Manager, State};
+use tauri_plugin_positioner::{Position, WindowExt};
 
 // === Store ===
+// REFORMAT: move to another file
 pub struct Store<T, A> {
     state: T,
     reducer: Box<dyn Fn(T, A) -> T + Send>,
@@ -25,15 +32,16 @@ where
 
 // =============
 
-#[derive(Default, Debug, PartialEq, Copy, Clone)]
-enum TimerStatus {
+#[derive(Default, Debug, PartialEq, Copy, Clone, serde::Serialize)]
+pub enum TimerStatus {
     #[default]
     Idle,
     Running,
     Paused,
+    Finished,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub enum TimerStateAction {
     IncrementSeconds,
     DecrementSeconds,
@@ -47,7 +55,7 @@ pub enum TimerStateAction {
 // --------------------------------
 // --- Timer State ----------------
 // --------------------------------
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, serde::Serialize, Debug)]
 pub struct TimerState {
     minutes: i32,
     seconds: i32,
@@ -57,7 +65,7 @@ pub struct TimerState {
 impl Default for TimerState {
     fn default() -> Self {
         TimerState {
-            minutes: 25,
+            minutes: 20,
             seconds: 00,
             status: TimerStatus::Idle,
         }
@@ -104,8 +112,7 @@ fn timer_state_reducer(state: TimerState, action: TimerStateAction) -> TimerStat
 
             if is_minutes_zero && is_seconds_zero {
                 return TimerState {
-                    // Timer finished -> switch to default status
-                    status: TimerStatus::Idle,
+                    status: TimerStatus::Finished,
                     minutes: 0,
                     seconds: 0,
                 };
@@ -133,15 +140,14 @@ fn timer_state_reducer(state: TimerState, action: TimerStateAction) -> TimerStat
 // --- Timer ----------------------
 // --------------------------------
 pub struct Timer {
-    // pub state: Mutex<TimerState>,
-    pub store: Mutex<Store<TimerState, TimerStateAction>>,
+    pub store: Arc<Mutex<Store<TimerState, TimerStateAction>>>,
 }
 
 impl Default for Timer {
     fn default() -> Self {
         let store: Store<TimerState, TimerStateAction> = Store::new(Box::new(timer_state_reducer));
         Timer {
-            store: Mutex::new(store),
+            store: Arc::new(Mutex::new(store)),
         }
     }
 }
@@ -150,47 +156,122 @@ impl Default for Timer {
 // --- Commands --------------
 // ---------------------------
 #[tauri::command]
-pub fn timer_start(window: tauri::Window, timer: State<Timer>) {
-    // let app_handle = window.app_handle();
+pub fn timer_start(timer: State<Timer>) -> TimerState {
+    let state_handler = Arc::clone(&timer.store);
 
-    // Dispatch action
-    let mut store_handle = timer.store.lock().unwrap();
-    println!("Store state: {}", store_handle.state.minutes);
-    store_handle.dispatch(TimerStateAction::IncrementMinutes);
-    println!("Store state: {}", store_handle.state.minutes);
-    store_handle.dispatch(TimerStateAction::IncrementMinutes);
-    println!("Store state: {}", store_handle.state.minutes);
+    let state_change = thread::spawn(move || {
+        let mut timer_handle = state_handler.lock().unwrap();
+        timer_handle.dispatch(TimerStateAction::Start);
+        timer_handle.state
+    });
 
-    // timer.dispatch(TimerStateAction::DecrementSeconds);
-    // println!("{}", timer.current_time_string());
+    let result = state_change.join().unwrap();
+    result
+}
 
-    // timer.dispatch(TimerStateAction::Start);
-    // println!("{}", timer.current_time_string());
+#[tauri::command]
+pub fn timer_pause(timer: State<Timer>) -> TimerState {
+    let state_handler = Arc::clone(&timer.store);
 
-    // let thread_data = timer.current_time_string().clone();
-    // thread::spawn(move || loop {
-    //     thread::sleep(Duration::from_secs(1));
-    //     println!("{}", thread_data);
-    // });
+    let state_change = thread::spawn(move || {
+        let mut timer_handle = state_handler.lock().unwrap();
+        timer_handle.dispatch(TimerStateAction::Pause);
+        timer_handle.state
+    });
 
-    // Emit event to notify all windows
-    // TODO: emitting should be coming from Timer struct
-    // app_handle
-    //     .emit_all(
-    //         "timer_state_changed",
-    //         TimerEventPayload {
-    //             status: "running".into(),
-    //             time: timer.current_time_string(),
-    //         },
-    //     )
-    //     .unwrap();
+    let result = state_change.join().unwrap();
+    result
+}
+
+#[tauri::command]
+pub fn timer_get_state(timer: State<Timer>) -> TimerState {
+    let state_handler = Arc::clone(&timer.store);
+
+    let state = thread::spawn(move || {
+        let timer_handle = state_handler.lock().unwrap();
+        timer_handle.state
+    });
+
+    let result = state.join().unwrap();
+    result
+}
+
+#[tauri::command]
+pub fn timer_reset(timer: State<Timer>) -> TimerState {
+    let state_handler = Arc::clone(&timer.store);
+
+    let state = thread::spawn(move || {
+        let mut timer_handle = state_handler.lock().unwrap();
+        timer_handle.dispatch(TimerStateAction::Reset);
+        timer_handle.state
+    });
+
+    let result = state.join().unwrap();
+    result
 }
 
 // ------------------------------
 // --- Events -------------------
 // -- Event Payload
 #[derive(Clone, serde::Serialize)]
-struct TimerEventPayload {
-    status: String,
-    time: String,
+pub struct TimerEventPayload {
+    status: TimerStatus,
+    minutes: i32,
+    seconds: i32,
+}
+
+// -------------------------------
+// --- Thread --------------------
+pub fn spawn_timer_thread(
+    app_handle: &AppHandle,
+    state_handler: Arc<Mutex<Store<TimerState, TimerStateAction>>>,
+) -> JoinHandle<()> {
+    let app_handle = app_handle.clone();
+
+    thread::spawn(move || loop {
+        thread::sleep(Duration::from_secs(1));
+
+        let mut state_handler = state_handler.lock().unwrap();
+
+        let timer_status = state_handler.state.status;
+
+        if timer_status == TimerStatus::Finished {
+            let window_width = 400.00;
+            let window_height = 400.00;
+
+            let timer_finished_win = tauri::WindowBuilder::new(
+                &app_handle,
+                TIMER_FINISHED_WINDOW_LABEL,
+                tauri::WindowUrl::App("timer/timer-finished".into()),
+            )
+            .inner_size(window_width, window_height)
+            .resizable(false)
+            .decorations(false)
+            .always_on_top(true)
+            .skip_taskbar(true)
+            .transparent(true)
+            .build()
+            .unwrap();
+
+            timer_finished_win.move_window(Position::TopRight).unwrap();
+        }
+
+        if timer_status == TimerStatus::Running {
+            state_handler.dispatch(TimerStateAction::DecrementSeconds);
+
+            // Emit state change event
+            let minutes = state_handler.state.minutes;
+            let seconds = state_handler.state.seconds;
+            app_handle
+                .emit_all(
+                    "timer_state_changed",
+                    TimerEventPayload {
+                        status: timer_status,
+                        minutes,
+                        seconds,
+                    },
+                )
+                .unwrap();
+        }
+    })
 }
