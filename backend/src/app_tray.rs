@@ -1,7 +1,7 @@
 // --- System App Tray ---
 use tauri::{
-    AppHandle, CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu,
-    SystemTrayMenuItem,
+    AppHandle, CustomMenuItem, LogicalPosition, Manager, PhysicalPosition, SystemTray,
+    SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem,
 };
 
 use crate::{MAIN_WINDOW_LABEL, TRAY_ITEM_OPEN_APP_ID, TRAY_ITEM_QUIT_ID, TRAY_WINDOW_LABEL};
@@ -9,14 +9,41 @@ use crate::{MAIN_WINDOW_LABEL, TRAY_ITEM_OPEN_APP_ID, TRAY_ITEM_QUIT_ID, TRAY_WI
 pub fn init_app_tray() -> SystemTray {
     let open_app = CustomMenuItem::new(TRAY_ITEM_OPEN_APP_ID, "Open App");
     let quit = CustomMenuItem::new(TRAY_ITEM_QUIT_ID, "Quit");
+
     let _tray_menu = SystemTrayMenu::new()
         .add_item(open_app)
         .add_native_item(SystemTrayMenuItem::Separator)
         .add_item(quit);
 
     SystemTray::new().with_id("tray")
-    // .with_menu(tray_menu)
-    // .with_menu_on_left_click(false)
+}
+
+pub fn build_app_tray_menu(app: &AppHandle, position: PhysicalPosition<f64>) {
+    let window_width = 200.00;
+    let window_height = 200.00;
+
+    let win_setup = tauri::WindowBuilder::new(
+        app,
+        TRAY_WINDOW_LABEL, /* the unique window label */
+        tauri::WindowUrl::App(TRAY_WINDOW_LABEL.into()),
+    )
+    .inner_size(window_width, window_height)
+    .resizable(false)
+    .decorations(false)
+    .always_on_top(true)
+    .skip_taskbar(true)
+    .transparent(true)
+    .focus();
+
+    match win_setup.build() {
+        Ok(win) => {
+            let scale_factor = win.scale_factor().unwrap();
+            let l_position =
+                LogicalPosition::new(position.x / scale_factor, position.y / scale_factor);
+            win.set_position(l_position).unwrap();
+        }
+        Err(_error) => panic!("Failed to build tray window"),
+    }
 }
 
 pub fn app_tray_event_handler(app: &AppHandle, event: SystemTrayEvent) {
@@ -26,32 +53,7 @@ pub fn app_tray_event_handler(app: &AppHandle, event: SystemTrayEvent) {
         } => {
             println!("system tray received a LEFT click");
 
-            let window_width = 200.00;
-            let window_height = 200.00;
-
-            let window = tauri::WindowBuilder::new(
-                app,
-                TRAY_WINDOW_LABEL, /* the unique window label */
-                tauri::WindowUrl::App(TRAY_WINDOW_LABEL.into()),
-            )
-            .inner_size(window_width, window_height)
-            // NOTE: depending on the screen this has to be changed.
-            // Retina displays need x & y divided by 2 to by attached to icon
-            .position(position.x / 2.0, position.y / 2.0)
-            .decorations(true)
-            .resizable(false)
-            .decorations(false)
-            .always_on_top(true)
-            .skip_taskbar(true)
-            .transparent(true)
-            .focus();
-
-            if let Err(_error) = window.build() {
-                let tray_window = app.get_window(TRAY_WINDOW_LABEL).unwrap();
-                tray_window
-                    .close()
-                    .unwrap_or_else(|_err| println!("Failed to close tray window."));
-            }
+            build_app_tray_menu(app, position)
         }
         SystemTrayEvent::RightClick {
             position: _,
