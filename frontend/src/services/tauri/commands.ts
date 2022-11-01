@@ -1,15 +1,5 @@
 import { invoke } from '@tauri-apps/api/tauri';
 
-// export async function listenToEvent(evtName, cb) {
-//   // return 'Hello FROM LISTENER';
-//   return listen(evtName, (event) => {
-//     const { payload } = event;
-//     console.log('CALLING Callback with data:', payload);
-//     cb(payload);
-//     // return event.payload;
-//   });
-// }
-
 // --------------
 // --- App ------
 export async function hideMainWindow() {
@@ -24,6 +14,37 @@ export async function quitApp() {
 
 // ----------------
 // --- Timer ------
-export async function timerStart() {
+export async function timerStart(): Promise<void> {
   return invoke('timer_start');
+}
+export async function timerPause(): Promise<TimerState> {
+  return invoke('timer_pause');
+}
+export async function timerGetState(): Promise<TimerState> {
+  return invoke('timer_get_state');
+}
+export async function timerReset(): Promise<TimerState> {
+  return invoke('timer_reset');
+}
+// --- Timer finished ---
+export async function timerFinishedStartNew(): Promise<TimerState> {
+  return invoke('timer_finished_start_new');
+}
+export async function timerFinishedCloseWindow(): Promise<void> {
+  return invoke('timer_finished_close_window');
+}
+
+// ------------------
+// --- Types --------
+export enum TimerStatus {
+  Idle = 'Idle', 
+  Running = 'Running', 
+  Paused = 'Paused', 
+  Finished = 'Finished',
+}
+
+export interface TimerState {
+  status: TimerStatus;
+  minutes: number;
+  seconds: number;
 }
