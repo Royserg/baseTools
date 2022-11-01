@@ -1,3 +1,5 @@
+use std::thread;
+
 // --- System App Tray ---
 use tauri::{
     AppHandle, CustomMenuItem, LogicalPosition, Manager, PhysicalPosition, SystemTray,
@@ -18,7 +20,7 @@ pub fn init_app_tray() -> SystemTray {
     SystemTray::new().with_id("tray")
 }
 
-pub fn build_app_tray_menu(app: &AppHandle, position: PhysicalPosition<f64>) {
+pub fn build_app_tray_menu(app: &AppHandle, position: PhysicalPosition<f64>) -> Result<(), &str> {
     let window_width = 200.00;
     let window_height = 200.00;
 
@@ -41,8 +43,12 @@ pub fn build_app_tray_menu(app: &AppHandle, position: PhysicalPosition<f64>) {
             let l_position =
                 LogicalPosition::new(position.x / scale_factor, position.y / scale_factor);
             win.set_position(l_position).unwrap();
+            Ok(())
         }
-        Err(_error) => panic!("Failed to build tray window"),
+        Err(error) => {
+            println!("Error: {}", error);
+            Err("Failed to build tray")
+        }
     }
 }
 
@@ -53,7 +59,25 @@ pub fn app_tray_event_handler(app: &AppHandle, event: SystemTrayEvent) {
         } => {
             println!("system tray received a LEFT click");
 
-            build_app_tray_menu(app, position)
+            // -- Show tray menu
+            let app = app.clone();
+            let position = position.clone();
+            thread::spawn(move || {
+                // Check if window exists
+                let tray_win = app.get_window(TRAY_WINDOW_LABEL);
+
+                if let Some(win) = tray_win {
+                    // Close Tray window if it is already opened
+                    // NOTE: on multiple tray clicks app crashes without errors
+                    if let Err(error) = win.close() {
+                        println!("Failed to close tray: {}", error);
+                    }
+                } else {
+                    if let Err(error) = build_app_tray_menu(&app, position) {
+                        println!("Failed to build tray: {}", error)
+                    }
+                };
+            });
         }
         SystemTrayEvent::RightClick {
             position: _,
