@@ -1,5 +1,6 @@
 import type { NextPage } from 'next';
 import Head from 'next/head';
+import { BsHourglassSplit } from 'react-icons/bs';
 import AppBar from '../components/app-bar';
 import Timer from '../components/timer';
 
@@ -15,9 +16,13 @@ const Home: NextPage = () => {
       <AppBar />
 
       <main className='flex flex-col grow'>
-        <h1 className='text-4xl text-center underline'>Time Chamber</h1>
+        <h1 className='text-8xl flex justify-center'>
+          <BsHourglassSplit />
+        </h1>
 
-        <Timer />
+        <div className='w-1/2 h-full mx-auto flex justify-center items-center'>
+          <Timer />
+        </div>
       </main>
     </div>
   );
