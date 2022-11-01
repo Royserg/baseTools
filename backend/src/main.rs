@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, thread};
 
 #[cfg_attr(
     all(not(debug_assertions), target_os = "windows"),
@@ -16,7 +16,10 @@ use app_tray::{app_tray_event_handler, init_app_tray};
 mod apps;
 use apps::timer::{spawn_timer_thread, timer_start, Timer};
 
-use crate::apps::timer::{timer_get_state, timer_pause, timer_reset};
+use crate::apps::timer::{
+    timer_finished_close_window, timer_finished_start_new, timer_get_state, timer_pause,
+    timer_reset,
+};
 
 // -------------------------
 // --- CONSTANTS -----------
@@ -47,7 +50,7 @@ fn main() {
 
             let _window = app.get_window(MAIN_WINDOW_LABEL).unwrap();
             // -- Hide main window when app starts
-            // _window.hide().unwrap();
+            _window.hide().unwrap();
 
             let app_handle = app.app_handle();
             let timer_store = app.try_state::<Timer>().unwrap();
@@ -67,7 +70,9 @@ fn main() {
             timer_start,
             timer_get_state,
             timer_pause,
-            timer_reset
+            timer_reset,
+            timer_finished_start_new,
+            timer_finished_close_window
         ])
         // --- Window events
         .on_window_event(|event| match event.event() {
@@ -75,7 +80,11 @@ fn main() {
                 // Close tray-menu when window loses focus
                 if !focused {
                     if event.window().label() == TRAY_WINDOW_LABEL {
-                        event.window().close().unwrap();
+                        thread::spawn(move || {
+                            if let Err(error) = event.window().close() {
+                                println!("Failed to close tray: {}", error);
+                            }
+                        });
                     }
                 }
             }

@@ -4,33 +4,10 @@ use std::{
     thread::{self, JoinHandle},
     time::Duration,
 };
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Manager, State, Window};
 use tauri_plugin_positioner::{Position, WindowExt};
 
-// === Store ===
-// REFORMAT: move to another file
-pub struct Store<T, A> {
-    state: T,
-    reducer: Box<dyn Fn(T, A) -> T + Send>,
-}
-
-impl<T, A> Store<T, A>
-where
-    T: Copy + Clone + Default + PartialEq,
-{
-    fn new(reducer: Box<dyn Fn(T, A) -> T + Send>) -> Self {
-        Self {
-            state: T::default(),
-            reducer,
-        }
-    }
-
-    fn dispatch(&mut self, action: A) {
-        self.state = (self.reducer)(self.state, action);
-    }
-}
-
-// =============
+use super::store::Store;
 
 #[derive(Default, Debug, PartialEq, Copy, Clone, serde::Serialize)]
 pub enum TimerStatus {
@@ -209,6 +186,41 @@ pub fn timer_reset(timer: State<Timer>) -> TimerState {
     let result = state.join().unwrap();
     result
 }
+// --- TimerFinished window ---
+#[tauri::command]
+pub fn timer_finished_start_new(window: Window, timer: State<Timer>) -> TimerState {
+    let state_handler = Arc::clone(&timer.store);
+
+    let state_change = thread::spawn(move || {
+        let mut timer_handle = state_handler.lock().unwrap();
+        timer_handle.dispatch(TimerStateAction::Reset);
+        timer_handle.dispatch(TimerStateAction::Start);
+        timer_handle.state
+    });
+
+    let result = state_change.join().unwrap();
+
+    if let Some(win) = window.get_window(TIMER_FINISHED_WINDOW_LABEL) {
+        win.close().unwrap();
+    }
+
+    result
+}
+
+#[tauri::command]
+pub fn timer_finished_close_window(window: Window, timer: State<Timer>) {
+    let state_handler = Arc::clone(&timer.store);
+
+    let _ = thread::spawn(move || {
+        let mut timer_handle = state_handler.lock().unwrap();
+        timer_handle.dispatch(TimerStateAction::Reset);
+        timer_handle.state
+    });
+
+    if let Some(win) = window.get_window(TIMER_FINISHED_WINDOW_LABEL) {
+        win.close().unwrap();
+    }
+}
 
 // ------------------------------
 // --- Events -------------------
@@ -236,24 +248,11 @@ pub fn spawn_timer_thread(
         let timer_status = state_handler.state.status;
 
         if timer_status == TimerStatus::Finished {
-            let window_width = 400.00;
-            let window_height = 400.00;
-
-            let timer_finished_win = tauri::WindowBuilder::new(
-                &app_handle,
-                TIMER_FINISHED_WINDOW_LABEL,
-                tauri::WindowUrl::App("timer/timer-finished".into()),
-            )
-            .inner_size(window_width, window_height)
-            .resizable(false)
-            .decorations(false)
-            .always_on_top(true)
-            .skip_taskbar(true)
-            .transparent(true)
-            .build()
-            .unwrap();
-
-            timer_finished_win.move_window(Position::TopRight).unwrap();
+            // Show timer finished if it is not displayed
+            match app_handle.get_window(TIMER_FINISHED_WINDOW_LABEL) {
+                None => show_timer_finished_window(&app_handle),
+                Some(_) => (),
+            }
         }
 
         if timer_status == TimerStatus::Running {
@@ -274,4 +273,25 @@ pub fn spawn_timer_thread(
                 .unwrap();
         }
     })
+}
+
+pub fn show_timer_finished_window(app_handle: &AppHandle) {
+    let window_width = 400.00;
+    let window_height = 400.00;
+
+    let timer_finished_win = tauri::WindowBuilder::new(
+        app_handle,
+        TIMER_FINISHED_WINDOW_LABEL,
+        tauri::WindowUrl::App("timer/timer-finished".into()),
+    )
+    .inner_size(window_width, window_height)
+    .resizable(false)
+    .decorations(false)
+    .always_on_top(true)
+    .skip_taskbar(true)
+    .transparent(true)
+    .build()
+    .unwrap();
+
+    timer_finished_win.move_window(Position::TopRight).unwrap();
 }
