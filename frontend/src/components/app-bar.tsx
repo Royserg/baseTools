@@ -10,7 +10,7 @@ const AppBar: NextComponentType = () => {
 
   return (
     <nav
-      className='rounded-t-xl w-full bg-neutral-500 px-4 py-3 flex gap-x-2'
+      className='rounded-t-xl w-full bg-stone-900 px-4 py-3 flex gap-x-2'
       data-tauri-drag-region='default'
     >
       <button
