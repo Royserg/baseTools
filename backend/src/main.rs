@@ -44,13 +44,9 @@ fn main() {
         // --- Setup
         .setup(|app| {
             // (MacOS) Makes app run in the background, and hides the Dock icon
-            // Without this, switching virual desktop pauses the event loop
+            // Without this, switching virtual desktop pauses the event loop
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
-
-            let _window = app.get_window(MAIN_WINDOW_LABEL).unwrap();
-            // -- Hide main window when app starts
-            _window.hide().unwrap();
 
             let app_handle = app.app_handle();
             let timer_store = app.try_state::<Timer>().unwrap();
