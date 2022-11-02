@@ -13,17 +13,19 @@ const TimerPage: NextPage = () => {
       <div className='py-5'></div>
 
       <main className='flex flex-col grow'>
-        <h1 className='text-8xl flex justify-center'>
-          <BsHourglassSplit />
-        </h1>
-
-        {/* Navigate back */}
-        <div className='flex'>
-          <button className='rounded-md p-2 -ml-2 -mt-24 bg-slate-100'>
+        <div className='flex justify-center items-center relative'>
+          {/* Navigate back */}
+          <div className='absolute -left-1 h-full'>
             <Link href='/'>
-              <BsFillCaretLeftFill className='text-zinc-800 text-3xl' />
+              <button className='rounded-md h-full p-2 bg-slate-100 flex flex-col justify-center items-center'>
+                <BsFillCaretLeftFill className='text-zinc-800 text-3xl' />
+              </button>
             </Link>
-          </button>
+          </div>
+
+          <h1 className='text-8xl flex justify-center'>
+            <BsHourglassSplit />
+          </h1>
         </div>
 
         <div className='w-1/2 h-full mx-auto flex justify-center items-center'>
