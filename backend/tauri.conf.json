@@ -7,7 +7,7 @@
     "withGlobalTauri": true
   },
   "package": {
-    "productName": "Base",
+    "productName": "baseTools",
     "version": "0.1.0"
   },
   "tauri": {
@@ -34,7 +34,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "base.app",
+      "identifier": "baseTools.app",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
@@ -64,7 +64,7 @@
         "height": 600,
         "width": 800,
         "resizable": false,
-        "title": "Base",
+        "title": "baseTools",
         "center": true,
         "skipTaskbar": true,
         "decorations": false,

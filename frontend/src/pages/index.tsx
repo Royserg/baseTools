@@ -9,8 +9,8 @@ const Home: NextPage = () => {
   return (
     <div className='w-full h-full flex flex-col'>
       <Head>
-        <title>Base Tools</title>
-        <meta name='description' content='Base application' />
+        <title>baseTools</title>
+        <meta name='description' content='Micro apps - development tools' />
         <link rel='icon' href='/favicon.ico' />
       </Head>
 
@@ -21,7 +21,7 @@ const Home: NextPage = () => {
       <div className='w-100 bg-stone-900'>
         <div className='container mx-auto'>
           <div className='flex flex-col items-center justify-center h-44'>
-            <h1 className='text-5xl font-bold'>Base Tools</h1>
+            <h1 className='text-5xl font-bold'>baseTools</h1>
 
             <div className='w-1/3 p-4 flex items-center justify-center'>
               <Image

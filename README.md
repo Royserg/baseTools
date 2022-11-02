@@ -1,4 +1,4 @@
-# BaseApp
+# baseTools
 
 Basic functions and utilities for productivity and well-being.
 
