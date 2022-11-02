@@ -62,10 +62,10 @@
       {
         "fullscreen": false,
         "height": 600,
+        "width": 800,
         "resizable": false,
         "title": "Base",
         "center": true,
-        "width": 800,
         "skipTaskbar": true,
         "decorations": false,
         "transparent": true
