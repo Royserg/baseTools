@@ -2,8 +2,8 @@ import { invoke } from '@tauri-apps/api/tauri';
 
 // --------------
 // --- App ------
-export async function hideMainWindow() {
-  return await invoke('hide_main_window');
+export async function closeMainWindow() {
+  return await invoke('close_main_window');
 }
 export async function showMainWindow() {
   return await invoke('show_main_window');
@@ -37,9 +37,9 @@ export async function timerFinishedCloseWindow(): Promise<void> {
 // ------------------
 // --- Types --------
 export enum TimerStatus {
-  Idle = 'Idle', 
-  Running = 'Running', 
-  Paused = 'Paused', 
+  Idle = 'Idle',
+  Running = 'Running',
+  Paused = 'Paused',
   Finished = 'Finished',
 }
 

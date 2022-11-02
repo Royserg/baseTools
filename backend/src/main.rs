@@ -7,7 +7,7 @@ use std::{sync::Arc, thread};
 use tauri::{Builder, Manager};
 
 mod commands;
-use commands::{hide_main_window, quit_app, show_main_window};
+use commands::{close_main_window, quit_app, show_main_window};
 
 mod app_tray;
 use app_tray::{app_tray_event_handler, init_app_tray};

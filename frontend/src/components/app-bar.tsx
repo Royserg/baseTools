@@ -1,11 +1,11 @@
 import type { NextComponentType } from 'next';
-import { hideMainWindow } from '../services/tauri';
+import { closeMainWindow } from '../services/tauri';
 
 const AppBar: NextComponentType = () => {
   let navControlClasses = 'rounded-full bg-gray-400 w-3 h-3';
 
   let onCloseClick = async () => {
-    await hideMainWindow();
+    await closeMainWindow();
   };
 
   return (
