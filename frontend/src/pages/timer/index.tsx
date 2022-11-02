@@ -1,12 +1,10 @@
 import type { NextPage } from 'next';
-import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { BsFillCaretLeftFill, BsHourglassSplit } from 'react-icons/bs';
 import AppBar from '../../components/app-bar';
 import Timer from '../../components/timer';
 
 const TimerPage: NextPage = () => {
-  const router = useRouter();
-
   return (
     <div className='bg-zinc-800 w-full h-full flex flex-col'>
       <AppBar />
@@ -21,11 +19,10 @@ const TimerPage: NextPage = () => {
 
         {/* Navigate back */}
         <div className='flex'>
-          <button
-            className='rounded-md p-2 -ml-2 -mt-24 bg-slate-100'
-            onClick={() => router.back()}
-          >
-            <BsFillCaretLeftFill className='text-zinc-800 text-3xl' />
+          <button className='rounded-md p-2 -ml-2 -mt-24 bg-slate-100'>
+            <Link href='/'>
+              <BsFillCaretLeftFill className='text-zinc-800 text-3xl' />
+            </Link>
           </button>
         </div>
 
