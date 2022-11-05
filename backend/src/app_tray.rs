@@ -6,14 +6,26 @@ use tauri::{
     SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem,
 };
 
-use crate::{MAIN_WINDOW_LABEL, TRAY_ITEM_OPEN_APP_ID, TRAY_ITEM_QUIT_ID, TRAY_WINDOW_LABEL};
+use crate::{
+    windows::main_window::build_main_window, MAIN_WINDOW_LABEL, TRAY_ITEM_OPEN_APP_ID,
+    TRAY_ITEM_QUIT_ID, TRAY_ITEM_TIMER_ID, TRAY_WINDOW_LABEL,
+};
 
 pub fn init_app_tray() -> SystemTray {
-    let open_app = CustomMenuItem::new(TRAY_ITEM_OPEN_APP_ID, "Open App");
+    // Shows app by default
+    let open_app = CustomMenuItem::new(TRAY_ITEM_OPEN_APP_ID, "Hide baseTools");
     let quit = CustomMenuItem::new(TRAY_ITEM_QUIT_ID, "Quit");
 
+    // Timer
+    let timer_title = CustomMenuItem::new("timer_title", "Timer").disabled();
+    let timer = CustomMenuItem::new(TRAY_ITEM_TIMER_ID, "20:00");
+
+    // Leftover from testing native tray menu (does not provide custom icons/elements)
     let _tray_menu = SystemTrayMenu::new()
         .add_item(open_app)
+        .add_native_item(SystemTrayMenuItem::Separator)
+        .add_item(timer_title)
+        .add_item(timer)
         .add_native_item(SystemTrayMenuItem::Separator)
         .add_item(quit);
 
@@ -26,7 +38,7 @@ pub fn build_app_tray_menu(app: &AppHandle, position: PhysicalPosition<f64>) -> 
 
     let win_setup = tauri::WindowBuilder::new(
         app,
-        TRAY_WINDOW_LABEL, /* the unique window label */
+        TRAY_WINDOW_LABEL,
         tauri::WindowUrl::App(TRAY_WINDOW_LABEL.into()),
     )
     .inner_size(window_width, window_height)
@@ -67,9 +79,7 @@ pub fn app_tray_event_handler(app: &AppHandle, event: SystemTrayEvent) {
                 let tray_win = app.get_window(TRAY_WINDOW_LABEL);
 
                 if let Some(win) = tray_win {
-                    // Close Tray window if it is already opened
-                    // NOTE: on multiple tray clicks app crashes without errors
-                    if let Err(error) = win.close() {
+                    if let Err(error) = win.hide() {
                         println!("Failed to close tray: {}", error);
                     }
                 } else {
@@ -87,10 +97,6 @@ pub fn app_tray_event_handler(app: &AppHandle, event: SystemTrayEvent) {
             println!("system tray received a RIGHT click");
         }
         SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
-            TRAY_ITEM_OPEN_APP_ID => {
-                let window = app.get_window(MAIN_WINDOW_LABEL).unwrap();
-                window.show().unwrap();
-            }
             TRAY_ITEM_QUIT_ID => {
                 std::process::exit(0);
             }

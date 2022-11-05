@@ -1,7 +1,7 @@
 // --- Commands ---
 use tauri::{Manager, Window};
 
-use crate::MAIN_WINDOW_LABEL;
+use crate::{windows::main_window::build_main_window, MAIN_WINDOW_LABEL};
 
 #[tauri::command]
 pub fn close_main_window(window: Window) {
@@ -11,8 +11,11 @@ pub fn close_main_window(window: Window) {
 
 #[tauri::command]
 pub fn show_main_window(window: Window) {
-    let main_window = window.get_window(MAIN_WINDOW_LABEL).unwrap();
-    main_window.show().unwrap();
+    let app_handle = window.app_handle();
+    match app_handle.get_window(MAIN_WINDOW_LABEL) {
+        Some(win) => win.show().unwrap(),
+        None => build_main_window(&app_handle).unwrap(),
+    }
 }
 
 #[tauri::command]
