@@ -1,14 +1,9 @@
 {
   "extends": "next/core-web-vitals",
   "rules": {
-    "jsx-quotes": [
-      "error",
-      "prefer-single"
-    ],
-    "quotes": [
-      "error",
-      "single"
-    ],
-    "semi": "error"
+    "jsx-quotes": ["error", "prefer-single"],
+    "quotes": ["error", "single"],
+    "semi": "error",
+    "no-html-link-for-pages": 0
   }
 }

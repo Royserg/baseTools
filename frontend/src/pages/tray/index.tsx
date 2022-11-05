@@ -1,5 +1,3 @@
-'use client';
-
 import { PageWrapper } from '@components/page-wrapper';
 import { Separator } from '@components/separator';
 import { Timer } from '@components/timer';
