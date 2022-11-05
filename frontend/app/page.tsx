@@ -40,14 +40,6 @@ export default function MainWindow() {
               </div>
             </Link>
           </div>
-
-          {/* Test */}
-          <Link href='/tray' className='p-2 border'>
-            Tray-Link
-          </Link>
-          <Link href='/timer/timer-finished' className='p-2 border'>
-            timer finished
-          </Link>
         </div>
       </div>
     </PageWrapper>
