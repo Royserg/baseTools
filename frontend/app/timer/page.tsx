@@ -1,18 +1,18 @@
-import type { NextPage } from 'next';
+import { AppBar } from '@components/app-bar';
+import { PageWrapper } from '@components/page-wrapper';
+import { Timer } from '@components/timer';
 import Link from 'next/link';
 import { BsFillCaretLeftFill, BsHourglassSplit } from 'react-icons/bs';
-import AppBar from '../../components/app-bar';
-import Timer from '../../components/timer';
 
-const TimerPage: NextPage = () => {
+export default function TimerWindow() {
   return (
-    <div className='bg-zinc-800 w-full h-full flex flex-col'>
+    <PageWrapper bgColorClass='bg-zinc-800'>
       <AppBar />
 
       {/* Divider */}
       <div className='py-5'></div>
 
-      <main className='flex flex-col grow'>
+      <main className='flex flex-col grow text-gray-200'>
         <div className='flex justify-center items-center relative'>
           {/* Navigate back */}
           <div className='absolute -left-1 h-full'>
@@ -32,8 +32,6 @@ const TimerPage: NextPage = () => {
           <Timer />
         </div>
       </main>
-    </div>
+    </PageWrapper>
   );
-};
-
-export default TimerPage;
+}

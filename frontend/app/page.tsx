@@ -1,27 +1,20 @@
-import type { NextPage } from 'next';
-import Head from 'next/head';
+import { AppBar } from '@components/app-bar';
+import { PageWrapper } from '@components/page-wrapper';
 import Image from 'next/image';
 import Link from 'next/link';
 import { BsHourglassSplit } from 'react-icons/bs';
-import AppBar from '../components/app-bar';
 
-const Home: NextPage = () => {
+export default function MainWindow() {
   return (
-    <div className='w-full h-full flex flex-col'>
-      <Head>
-        <title>baseTools</title>
-        <meta name='description' content='Micro apps - development tools' />
-        <link rel='icon' href='/favicon.ico' />
-      </Head>
-
+    <PageWrapper>
       {/* Close button */}
       <AppBar />
 
       {/* Hero section */}
-      <div className='w-100 bg-stone-900'>
+      <div className='w-full'>
         <div className='container mx-auto'>
           <div className='flex flex-col items-center justify-center h-44'>
-            <h1 className='text-5xl font-bold'>baseTools</h1>
+            <h1 className='text-5xl font-bold text-gray-200'>baseTools</h1>
 
             <div className='w-1/3 p-4 flex items-center justify-center'>
               <Image
@@ -40,17 +33,23 @@ const Home: NextPage = () => {
         {/* Container */}
         <div className='container mt-10 w-1/2 mx-auto flex justify-start'>
           {/* Micro App */}
-          <div className='flex justify-center items-center w-24 border p-4 rounded-lg hover:cursor-pointer'>
+          <div className='flex justify-center items-center w-24 border p-4 rounded-lg hover:cursor-pointer text-gray-200'>
             <Link href='/timer' className='text-8xl'>
               <div className='text-6xl'>
                 <BsHourglassSplit />
               </div>
             </Link>
           </div>
+
+          {/* Test */}
+          <Link href='/tray' className='p-2 border'>
+            Tray-Link
+          </Link>
+          <Link href='/timer/timer-finished' className='p-2 border'>
+            timer finished
+          </Link>
         </div>
       </div>
-    </div>
+    </PageWrapper>
   );
-};
-
-export default Home;
+}

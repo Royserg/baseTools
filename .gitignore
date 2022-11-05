@@ -12,3 +12,5 @@ frontend/src/.DS_Store
 .idea/
 
 frontend2/
+
+.vscode/

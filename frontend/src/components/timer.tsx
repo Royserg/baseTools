@@ -1,3 +1,5 @@
+'use client';
+
 import {
   timerStart,
   timerGetState,
@@ -20,7 +22,7 @@ interface TimerProps {
   compact?: boolean;
 }
 
-const Timer: ComponentType<TimerProps> = ({ compact }) => {
+export const Timer: ComponentType<TimerProps> = ({ compact }) => {
   let actionBtnClasses = `w-full flex justify-center items-center rounded-md border ${
     compact ? 'text-lg' : 'text-5xl p-2'
   }  hover:bg-white hover:text-neutral-500`;
@@ -135,8 +137,6 @@ const Timer: ComponentType<TimerProps> = ({ compact }) => {
     </div>
   );
 };
-
-export default Timer;
 
 const padWithZero = (val: number): string => {
   const valString = val.toString();

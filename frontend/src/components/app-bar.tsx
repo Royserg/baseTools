@@ -1,7 +1,9 @@
+'use client';
+
 import type { NextComponentType } from 'next';
 import { closeMainWindow } from '../services/tauri';
 
-const AppBar: NextComponentType = () => {
+export const AppBar: NextComponentType = () => {
   let navControlClasses = 'rounded-full bg-gray-400 w-3 h-3';
 
   let onCloseClick = async () => {
@@ -25,5 +27,3 @@ const AppBar: NextComponentType = () => {
     </nav>
   );
 };
-
-export default AppBar;
