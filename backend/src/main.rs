@@ -1,6 +1,5 @@
 use std::{sync::Arc, thread, time::Duration};
 
-use tauri::async_runtime;
 #[cfg_attr(
     all(not(debug_assertions), target_os = "windows"),
     windows_subsystem = "windows"

@@ -282,7 +282,7 @@ pub fn show_timer_finished_window(app_handle: &AppHandle) {
     let timer_finished_win = tauri::WindowBuilder::new(
         app_handle,
         TIMER_FINISHED_WINDOW_LABEL,
-        tauri::WindowUrl::App("timer/timer-finished".into()),
+        tauri::WindowUrl::App("timer/finished".into()),
     )
     .inner_size(window_width, window_height)
     .resizable(false)
