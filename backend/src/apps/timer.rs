@@ -1,4 +1,4 @@
-use crate::TIMER_FINISHED_WINDOW_LABEL;
+use crate::{TIMER_FINISHED_OVERLAY_WINDOW_LABEL, TIMER_FINISHED_WINDOW_LABEL};
 use std::{
     sync::{Arc, Mutex},
     thread::{self, JoinHandle},
@@ -204,6 +204,10 @@ pub fn timer_finished_start_new(window: Window, timer: State<Timer>) -> TimerSta
         win.close().unwrap();
     }
 
+    if let Some(win) = window.get_window(TIMER_FINISHED_OVERLAY_WINDOW_LABEL) {
+        win.close().unwrap();
+    }
+
     result
 }
 
@@ -218,6 +222,10 @@ pub fn timer_finished_close_window(window: Window, timer: State<Timer>) {
     });
 
     if let Some(win) = window.get_window(TIMER_FINISHED_WINDOW_LABEL) {
+        win.close().unwrap();
+    }
+
+    if let Some(win) = window.get_window(TIMER_FINISHED_OVERLAY_WINDOW_LABEL) {
         win.close().unwrap();
     }
 }
@@ -276,9 +284,35 @@ pub fn spawn_timer_thread(
 }
 
 pub fn show_timer_finished_window(app_handle: &AppHandle) {
-    let window_width = 400.00;
-    let window_height = 400.00;
+    let window_width = 250.00;
+    let window_height = 200.00;
 
+    // --- Overlay ---
+    let timer_finished_overlay = tauri::WindowBuilder::new(
+        app_handle,
+        TIMER_FINISHED_OVERLAY_WINDOW_LABEL,
+        tauri::WindowUrl::App("timer/finished/overlay".into()),
+    )
+    .resizable(false)
+    .decorations(false)
+    .skip_taskbar(true)
+    .transparent(true)
+    .maximized(true)
+    .always_on_top(true)
+    .build()
+    .unwrap();
+
+    // Set window to be click through
+    timer_finished_overlay
+        .with_webview(|webview| {
+            #[cfg(target_os = "macos")]
+            unsafe {
+                let () = msg_send![webview.ns_window(), setIgnoresMouseEvents: true];
+            }
+        })
+        .unwrap();
+
+    // --- Timer finished action buttons ---
     let timer_finished_win = tauri::WindowBuilder::new(
         app_handle,
         TIMER_FINISHED_WINDOW_LABEL,
@@ -287,9 +321,9 @@ pub fn show_timer_finished_window(app_handle: &AppHandle) {
     .inner_size(window_width, window_height)
     .resizable(false)
     .decorations(false)
-    .always_on_top(true)
     .skip_taskbar(true)
     .transparent(true)
+    .always_on_top(true)
     .build()
     .unwrap();
 

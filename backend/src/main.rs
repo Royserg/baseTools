@@ -1,5 +1,9 @@
 use std::{sync::Arc, thread, time::Duration};
 
+#[cfg(target_os = "macos")]
+#[macro_use]
+extern crate objc;
+
 #[cfg_attr(
     all(not(debug_assertions), target_os = "windows"),
     windows_subsystem = "windows"
@@ -29,6 +33,7 @@ use crate::apps::timer::{
 const MAIN_WINDOW_LABEL: &str = "main";
 const TRAY_WINDOW_LABEL: &str = "tray";
 const TIMER_FINISHED_WINDOW_LABEL: &str = "timer-finished";
+const TIMER_FINISHED_OVERLAY_WINDOW_LABEL: &str = "timer-finished-overlay";
 // --- TRAY ITEMS ---
 const TRAY_ITEM_OPEN_APP_ID: &str = "open_app";
 const TRAY_ITEM_QUIT_ID: &str = "quit";
