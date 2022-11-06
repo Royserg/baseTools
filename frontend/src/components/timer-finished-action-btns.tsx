@@ -1,5 +1,3 @@
-'use client';
-
 import {
   timerFinishedCloseWindow,
   timerFinishedStartNew,
@@ -7,7 +5,7 @@ import {
 
 export const TimerFinishedActionButtons = () => {
   let actionBtnClasses =
-    'w-full flex justify-center items-center rounded-md border text-2xl p-2 hover:bg-white hover:text-neutral-500';
+    'w-full flex justify-center items-center rounded-md border text-md p-1 hover:bg-white hover:text-neutral-500 mb-2';
 
   const onStartNewTimerClick = async () => {
     await timerFinishedStartNew();
@@ -17,12 +15,14 @@ export const TimerFinishedActionButtons = () => {
   };
 
   return (
-    <div className='w-1/2 mx-auto'>
-      <button className={actionBtnClasses} onClick={onStartNewTimerClick}>
-        Start new timer
-      </button>
+    <div className='w-full px-2'>
+      {/* <button className={actionBtnClasses} onClick={onBreakClick}>
+        Break
+      </button> */}
 
-      <div className='py-2'></div>
+      <button className={actionBtnClasses} onClick={onStartNewTimerClick}>
+        New Timer
+      </button>
 
       <button className={actionBtnClasses} onClick={onCloseClick}>
         Close
