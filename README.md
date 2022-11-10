@@ -5,6 +5,7 @@ Basic micro apps - utility and productivity.
 # Current functionality:
 
 - Timer
+- SunGlass (brightness overlay)
 
 ## Technologies:
 
