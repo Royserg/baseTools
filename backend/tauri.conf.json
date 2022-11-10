@@ -1,13 +1,13 @@
 {
   "build": {
-    "distDir": "../frontend/dist",
-    "devPath": "http://localhost:8080",
-    "beforeDevCommand": "cd frontend && trunk serve",
-    "beforeBuildCommand": "cd frontend && trunk build",
+    "beforeBuildCommand": "cd frontend && pnpm build && pnpm export",
+    "beforeDevCommand": "cd frontend && pnpm dev",
+    "devPath": "http://localhost:3000",
+    "distDir": "../frontend/out",
     "withGlobalTauri": true
   },
   "package": {
-    "productName": "Base",
+    "productName": "baseTools",
     "version": "0.1.0"
   },
   "tauri": {
@@ -34,7 +34,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "base.app",
+      "identifier": "baseTools.app",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
@@ -62,10 +62,10 @@
       {
         "fullscreen": false,
         "height": 600,
-        "resizable": false,
-        "title": "Base",
-        "center": true,
         "width": 800,
+        "resizable": false,
+        "title": "baseTools",
+        "center": true,
         "skipTaskbar": true,
         "decorations": false,
         "transparent": true

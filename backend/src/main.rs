@@ -1,35 +1,82 @@
+use std::{sync::Arc, thread, time::Duration};
+
+#[cfg(target_os = "macos")]
+#[macro_use]
+extern crate objc;
+
 #[cfg_attr(
     all(not(debug_assertions), target_os = "windows"),
     windows_subsystem = "windows"
 )]
-use tauri::{
-    AppHandle, Builder, CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu,
-    SystemTrayMenuItem, Window,
+use tauri::{Builder, Manager};
+
+mod commands;
+use commands::{close_main_window, quit_app, show_main_window};
+
+mod app_tray;
+use app_tray::{app_tray_event_handler, init_app_tray};
+
+mod windows;
+
+// Apps
+mod apps;
+use apps::timer::{spawn_timer_thread, timer_start, Timer};
+
+use crate::apps::timer::{
+    timer_finished_close_window, timer_finished_start_new, timer_get_state, timer_pause,
+    timer_reset,
 };
 
-// --- WINDOWS ---
+// -------------------------
+// --- CONSTANTS -----------
+// --- WINDOWS -----
 const MAIN_WINDOW_LABEL: &str = "main";
-const TRAY_WINDOW_LABEL: &str = "tray-menu";
+const TRAY_WINDOW_LABEL: &str = "tray";
+const TIMER_FINISHED_WINDOW_LABEL: &str = "timer-finished";
+const TIMER_FINISHED_OVERLAY_WINDOW_LABEL: &str = "timer-finished-overlay";
 // --- TRAY ITEMS ---
 const TRAY_ITEM_OPEN_APP_ID: &str = "open_app";
 const TRAY_ITEM_QUIT_ID: &str = "quit";
+const TRAY_ITEM_TIMER_ID: &str = "timer";
+// -------------------------
 
 fn main() {
     let app_tray = init_app_tray();
 
     Builder::default()
+        .plugin(tauri_plugin_positioner::init())
+        // --- Store
+        .manage(Timer {
+            ..Default::default()
+        })
+        // --- Setup
         .setup(|app| {
-            let _window = app.get_window(MAIN_WINDOW_LABEL).unwrap();
-            _window.hide().unwrap();
+            // (MacOS) Makes app run in the background, and hides the Dock icon
+            // Without this, switching virtual desktop pauses the event loop
+            #[cfg(target_os = "macos")]
+            app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+
+            let app_handle = app.app_handle();
+            let timer_store = app.try_state::<Timer>().unwrap();
+            let timer_state_handler = Arc::clone(&timer_store.store);
+            spawn_timer_thread(&app_handle, timer_state_handler);
 
             Ok(())
         })
+        // --- Tray
         .system_tray(app_tray)
         .on_system_tray_event(app_tray_event_handler)
+        // --- Commands
         .invoke_handler(tauri::generate_handler![
-            hide_main_window,
+            close_main_window,
             show_main_window,
-            quit_app
+            quit_app,
+            timer_start,
+            timer_get_state,
+            timer_pause,
+            timer_reset,
+            timer_finished_start_new,
+            timer_finished_close_window
         ])
         // --- Window events
         .on_window_event(|event| match event.event() {
@@ -37,7 +84,15 @@ fn main() {
                 // Close tray-menu when window loses focus
                 if !focused {
                     if event.window().label() == TRAY_WINDOW_LABEL {
-                        event.window().close().unwrap();
+                        thread::spawn(move || {
+                            // Quick clicking Tray icon causes app to crash (potentially menu building is not finished before trying to close)
+                            // Adding short sleep prevents crashing
+                            thread::sleep(Duration::from_millis(400));
+
+                            if let Err(error) = event.window().close() {
+                                println!("Failed to close tray: {}", error);
+                            }
+                        });
                     }
                 }
             }
@@ -52,91 +107,4 @@ fn main() {
             }
             _ => {}
         });
-}
-
-// --- System App Tray ---
-fn init_app_tray() -> SystemTray {
-    let open_app = CustomMenuItem::new(TRAY_ITEM_OPEN_APP_ID, "Open App");
-    let quit = CustomMenuItem::new(TRAY_ITEM_QUIT_ID, "Quit");
-    let _tray_menu = SystemTrayMenu::new()
-        .add_item(open_app)
-        .add_native_item(SystemTrayMenuItem::Separator)
-        .add_item(quit);
-
-    SystemTray::new().with_id("tray")
-    // .with_menu(tray_menu)
-    // .with_menu_on_left_click(false)
-}
-
-fn app_tray_event_handler(app: &AppHandle, event: SystemTrayEvent) {
-    match event {
-        SystemTrayEvent::LeftClick {
-            position, size: _, ..
-        } => {
-            println!("system tray received a LEFT click");
-
-            let window_width = 200.00;
-            let window_height = 200.00;
-
-            let window = tauri::WindowBuilder::new(
-                app,
-                TRAY_WINDOW_LABEL, /* the unique window label */
-                tauri::WindowUrl::App(TRAY_WINDOW_LABEL.into()),
-            )
-            .inner_size(window_width, window_height)
-            // NOTE: depending on the screen this has to be changed.
-            // Retina displays need x & y divided by 2 to by attached to icon
-            .position(position.x / 2.0, position.y / 2.0)
-            .decorations(true)
-            .resizable(false)
-            .decorations(false)
-            .always_on_top(true)
-            .skip_taskbar(true)
-            .transparent(true)
-            .focus();
-
-            if let Err(_error) = window.build() {
-                let tray_window = app.get_window(TRAY_WINDOW_LABEL).unwrap();
-                tray_window
-                    .close()
-                    .unwrap_or_else(|_err| println!("Failed to close tray window."));
-            }
-        }
-        SystemTrayEvent::RightClick {
-            position: _,
-            size: _,
-            ..
-        } => {
-            println!("system tray received a RIGHT click");
-        }
-        SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
-            TRAY_ITEM_OPEN_APP_ID => {
-                let window = app.get_window(MAIN_WINDOW_LABEL).unwrap();
-                window.show().unwrap();
-            }
-            TRAY_ITEM_QUIT_ID => {
-                std::process::exit(0);
-            }
-            _ => {}
-        },
-        _ => {}
-    }
-}
-
-// ===========================================================
-// --- Commands ---
-#[tauri::command]
-fn hide_main_window(window: Window) {
-    window.hide().unwrap();
-}
-
-#[tauri::command]
-fn show_main_window(window: Window) {
-    let main_window = window.get_window(MAIN_WINDOW_LABEL).unwrap();
-    main_window.show().unwrap();
-}
-
-#[tauri::command]
-fn quit_app() {
-    std::process::exit(0);
 }

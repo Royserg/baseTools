@@ -8,3 +8,9 @@ frontend/src/components/.DS_Store
 frontend/src/.DS_Store
 
 .DS_Store
+
+.idea/
+
+frontend2/
+
+.vscode/
