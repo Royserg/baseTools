@@ -12,7 +12,7 @@ Basic micro apps - utility and productivity.
 - Backend layer - Rust
 - UI - NextJS
 
-## How to run project localy:
+## How to run project locally:
 
 Prerequisites:
 
