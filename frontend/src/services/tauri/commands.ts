@@ -33,6 +33,13 @@ export async function timerFinishedStartNew(): Promise<TimerState> {
 export async function timerFinishedCloseWindow(): Promise<void> {
   return invoke('timer_finished_close_window');
 }
+// ---- sunGlass ---
+export async function openSunGlassWindow(): Promise<void> {
+  return invoke('open_sunglass_window');
+}
+export async function closeSunGlassWindow(): Promise<void> {
+  return invoke('close_sunglass_window');
+}
 
 // ------------------
 // --- Types --------

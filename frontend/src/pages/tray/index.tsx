@@ -1,5 +1,6 @@
 import { PageWrapper } from '@components/page-wrapper';
 import { Separator } from '@components/separator';
+import { SunGlass } from '@components/sunglass';
 import { Timer } from '@components/timer';
 import { quitApp, showMainWindow } from '@services/tauri/commands';
 import { BsHourglassSplit } from 'react-icons/bs';
@@ -27,13 +28,23 @@ export default function AppTrayWindow() {
         <Separator />
 
         {/* Timer box */}
-        <div className='w-full p-2 grow'>
+        <div className='w-full p-2'>
           <h4 className='text-xs text-gray-400 pl-1'>Timer</h4>
           <div className='flex justify-between items-end gap-1'>
             <span className='text-5xl -mb-1'>
               <BsHourglassSplit />
             </span>
             <Timer compact />
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* sunGlass */}
+        <div className='w-full p-2 grow'>
+          <h4 className='text-xs text-gray-400 pl-1'>sunGlass</h4>
+          <div className='flex justify-center gap-1 pl-1'>
+            <SunGlass />
           </div>
         </div>
 

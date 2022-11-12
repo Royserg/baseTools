@@ -22,9 +22,12 @@ mod windows;
 mod apps;
 use apps::timer::{spawn_timer_thread, timer_start, Timer};
 
-use crate::apps::timer::{
-    timer_finished_close_window, timer_finished_start_new, timer_get_state, timer_pause,
-    timer_reset,
+use crate::{
+    apps::timer::{
+        timer_finished_close_window, timer_finished_start_new, timer_get_state, timer_pause,
+        timer_reset,
+    },
+    commands::{close_sunglass_window, open_sunglass_window},
 };
 
 // -------------------------
@@ -34,6 +37,7 @@ const MAIN_WINDOW_LABEL: &str = "main";
 const TRAY_WINDOW_LABEL: &str = "tray";
 const TIMER_FINISHED_WINDOW_LABEL: &str = "timer-finished";
 const TIMER_FINISHED_OVERLAY_WINDOW_LABEL: &str = "timer-finished-overlay";
+const SUNGLASS_OVERLAY_WINDOW_LABEL: &str = "sunglass-overlay";
 // --- TRAY ITEMS ---
 const TRAY_ITEM_OPEN_APP_ID: &str = "open_app";
 const TRAY_ITEM_QUIT_ID: &str = "quit";
@@ -76,7 +80,9 @@ fn main() {
             timer_pause,
             timer_reset,
             timer_finished_start_new,
-            timer_finished_close_window
+            timer_finished_close_window,
+            open_sunglass_window,
+            close_sunglass_window
         ])
         // --- Window events
         .on_window_event(|event| match event.event() {

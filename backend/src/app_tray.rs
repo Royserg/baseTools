@@ -6,10 +6,7 @@ use tauri::{
     SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem,
 };
 
-use crate::{
-    windows::main_window::build_main_window, MAIN_WINDOW_LABEL, TRAY_ITEM_OPEN_APP_ID,
-    TRAY_ITEM_QUIT_ID, TRAY_ITEM_TIMER_ID, TRAY_WINDOW_LABEL,
-};
+use crate::{TRAY_ITEM_OPEN_APP_ID, TRAY_ITEM_QUIT_ID, TRAY_ITEM_TIMER_ID, TRAY_WINDOW_LABEL};
 
 pub fn init_app_tray() -> SystemTray {
     // Shows app by default
@@ -34,7 +31,7 @@ pub fn init_app_tray() -> SystemTray {
 
 pub fn build_app_tray_menu(app: &AppHandle, position: PhysicalPosition<f64>) -> Result<(), &str> {
     let window_width = 200.00;
-    let window_height = 200.00;
+    let window_height = 230.00;
 
     let win_setup = tauri::WindowBuilder::new(
         app,
@@ -47,7 +44,7 @@ pub fn build_app_tray_menu(app: &AppHandle, position: PhysicalPosition<f64>) -> 
     .always_on_top(true)
     .skip_taskbar(true)
     .transparent(true)
-    .focus();
+    .focused(true);
 
     match win_setup.build() {
         Ok(win) => {

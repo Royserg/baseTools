@@ -14,7 +14,7 @@ pub fn build_main_window(app: &AppHandle) -> Result<(), &str> {
         .skip_taskbar(true)
         .transparent(true)
         .center()
-        .focus();
+        .focused(false);
 
     match win_setup.build() {
         Ok(_win) => Ok(()),
