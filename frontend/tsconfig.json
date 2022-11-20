@@ -21,6 +21,8 @@
     ],
     "paths": {
       "@components/*": ["./src/components/*"],
+      "@stores/*": ["./src/stores/*"],
+      "@shared/*": ["./src/shared/*"],
       "@services/*": ["./src/services/*"]
     }
   },

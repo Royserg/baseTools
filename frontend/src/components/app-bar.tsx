@@ -1,12 +1,14 @@
-'use client';
-
+import { useSunGlassStore } from '@stores/sunglass';
 import type { NextComponentType } from 'next';
 import { closeMainWindow } from '../services/tauri';
 
 export const AppBar: NextComponentType = () => {
   let navControlClasses = 'rounded-full bg-gray-400 w-3 h-3';
 
+  const { setActive } = useSunGlassStore();
+
   let onCloseClick = async () => {
+    setActive(false);
     await closeMainWindow();
   };
 
