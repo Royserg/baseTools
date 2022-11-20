@@ -1,17 +1,25 @@
 import { EVENTS_SUNGLASS } from '@shared/events';
 import { useSunGlassStore } from '@stores/sunglass';
 import { emit } from '@tauri-apps/api/event';
+import { cva } from 'cva';
 import { ChangeEvent, ComponentType, useEffect, useState } from 'react';
 import { closeSunGlassWindow, openSunGlassWindow } from '../services';
 
-interface SunGlassProps {}
+// --- Switch button class variants
+const activeSwitchBtn = cva('border w-1/5 rounded-xl -mb-2', {
+  variants: {
+    intent: {
+      activated: ['border-green-800 text-green-800'],
+      deactivated: ['border-red-800 text-red-800'],
+    },
+  },
+});
 
+// --- Component
+interface SunGlassProps {}
 export const SunGlass: ComponentType<SunGlassProps> = () => {
   const [loading, setLoading] = useState(true);
-
-  const { active, setActive, opacity, setOpacity } = useSunGlassStore(
-    (state) => state
-  );
+  const { active, setActive, opacity, setOpacity } = useSunGlassStore();
 
   useEffect(() => {
     if (active !== undefined && opacity !== undefined) {
@@ -38,7 +46,12 @@ export const SunGlass: ComponentType<SunGlassProps> = () => {
 
   return (
     <div className='flex grow justify-center items-center text-center'>
-      <button className='border w-1/5 rounded-xl -mb-2' onClick={onSwitchClick}>
+      <button
+        className={activeSwitchBtn({
+          intent: active ? 'activated' : 'deactivated',
+        })}
+        onClick={onSwitchClick}
+      >
         {active ? 'on' : 'off'}
       </button>
 
