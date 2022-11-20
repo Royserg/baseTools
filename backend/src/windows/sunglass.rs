@@ -18,11 +18,14 @@ pub fn build_sunglass_window(app: &AppHandle) -> Result<(), &str> {
 
     match win_setup.build() {
         Ok(win) => {
-            // Set window to be click through
             win.with_webview(|webview| {
                 #[cfg(target_os = "macos")]
                 unsafe {
+                    // Set window to be click through
                     let () = msg_send![webview.ns_window(), setIgnoresMouseEvents: true];
+                    // Assign app to all desktops
+                    // https://stackoverflow.com/a/12233351
+                    let () = msg_send![webview.ns_window(), setCollectionBehavior: true];
                 }
             })
             .unwrap();
